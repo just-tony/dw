@@ -1,0 +1,46 @@
+version: '3.7'
+services:
+
+  site:
+    image: jtda/php-fpm
+    entrypoint: ["symfony", "serve", "--no-tls"]
+    ports:
+      - 8000:8000
+    networks:
+      - service_net
+      - public_net
+      - default
+    volumes:
+      - ./site:/var/www/
+  balance:
+    image: jtda/php-fpm
+    entrypoint: ["symfony", "serve", "--no-tls"]
+    networks:
+      - service_net
+      - database_net
+      - default
+    volumes:
+      - ./balance:/var/www/
+    environment:
+      - 'POSTGRES_DB=${PGSQL_DB_NAME:-database_name}'
+      - 'POSTGRES_USER=${PGSQL_DB_USER:-database_user}'
+      - 'POSTGRES_PASSWORD=${PGSQL_DB_PASSWORD:-database_password}'
+  pgsql:
+      image: 'postgres:12-alpine'
+      environment:
+        - 'POSTGRES_DB=${PGSQL_DB_NAME:-database_name}'
+        - 'POSTGRES_USER=${PGSQL_DB_USER:-database_user}'
+        - 'POSTGRES_PASSWORD=${PGSQL_DB_PASSWORD:-database_password}'
+      volumes:
+        - pgsql_data:/var/lib/postgresql/data
+volumes:
+  pgsql_data:
+    driver: local
+
+networks:
+  database_net:
+    internal: true
+  service_net:
+    internal: true
+  public_net:
+    internal: true
